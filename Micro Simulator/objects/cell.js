@@ -74,7 +74,7 @@ class cell extends object {
     };
     process () {
         // Countdown Timer
-        this.gPointerTimer -= 1 * (this.energy>0);
+        this.gPointerTimer -= 1 * (this.energy>0) * timeScale;
         // If Timer Reaches 0...
         if(this.gPointerTimer <= 0) {
             this.age += 1;
@@ -126,11 +126,11 @@ class cell extends object {
         //this.energy -= (200-this.rgb[2])/100000;
 
         // Decay Energy
-        this.energy -= 0.001;
+        this.energy -= 0.001 * timeScale;
         // Cap Energy
         this.energy = Math.max(Math.min(this.energy, this.size), 0);
         // Decay Membrane
-        this.membrane -= 0.0005 * this.size;
+        this.membrane -= 0.0005 * this.size * timeScale;
         // Cap Membrane
         this.membrane = Math.min(this.membrane, this.size/2);
 

@@ -134,12 +134,11 @@ let screenHeight = screen.height;
 let screenX = screen.getBoundingClientRect().left;
 let screenY = screen.getBoundingClientRect().top;
 let ctx = screen.getContext("2d");
-// FPS
+// FPS & Time Variables
 let timeScale = 1;
+let timeScaleMult = 1;
 let FPS_average = 0;
 let FPS_sample = [];
-// General Vars
-let time = 0;
 let lastTime = 0;
 let frame = 0;
 // Mouse vars
@@ -178,6 +177,8 @@ let foodDecayRate = 1/5;
 let foodSpawnRate = 5;
 let foodSpawnAmount = 25;
 // objects
+let objectIndexesToRemove = [];
+let objectsToPush = [];
 let gIdHighest = 0;
 let amountOfFood = 0;
 let amountOfCells = 0;
@@ -304,12 +305,11 @@ function findElement (label) {
 };
 
 // Main Loop Function
-function main () {
+function main (time) {
     // FPS and Delta Time
-    time = parseInt(performance.now());
-    //timeScale = 100/(1/(time - lastTime)*1000);
+    timeScale = 60/(1/(time - lastTime)*1000);
     FPS_sample.push(time - lastTime);
-    lastTime = parseInt(performance.now());
+    lastTime = time;
     if(len(FPS_sample)>29) {
         FPS_average = 1/(average(FPS_sample)/1000);
         FPS_sample = [];
@@ -325,25 +325,29 @@ function main () {
     if(actionType != 'pan') {
         oldMouseX = mTransX;
         oldMouseY = mTransY;
+        // Keyboard Cam Movement (Only if not panning)
+        camVelX += (2/camZoom) * (isKeyDown('d') - isKeyDown('a'));
+        camVelY += (2/camZoom) * (isKeyDown('s') - isKeyDown('w'));
     };
     // Keyboard Cam Movement
-    camVelX += (2/camZoom) * (isKeyDown('d') - isKeyDown('a'));
-    camVelY += (2/camZoom) * (isKeyDown('s') - isKeyDown('w'));
     camVelZoom += (camZoom/200) * (isKeyDown('q') - isKeyDown('e'));
     // Add Zoom Velocty
-    camZoom += camVelZoom;
+    camZoom += camVelZoom * timeScale;
     // Cap camZoom
     camZoom = Math.max(Math.min(camZoom, 20), 0.2);
     // Camera Panning
     camX = oldMouseX - ((mouseX - screenWidth/2)/camZoom);
     camY =  oldMouseY - ((mouseY - screenHeight/2)/camZoom);
     //  Add Camera Velocity
-    camX += camVelX;
-    camY += camVelY;
+    camX += camVelX * timeScale;
+    camY += camVelY * timeScale;
     // Apply Friction
-    camVelZoom = camVelZoom/1.2;
-    camVelX = camVelX/1.2;
-    camVelY = camVelY/1.2;
+    camVelZoom = camVelZoom / 1.2 ** timeScale;
+    camVelX = camVelX / 1.2 ** timeScale;
+    camVelY = camVelY / 1.2 ** timeScale;
+
+    // Apply Timescale Multiplier
+    timeScale *= timeScaleMult
 
     // Clear Screen
     toRender = [];
@@ -406,20 +410,13 @@ function main () {
         ctx.fillRect(xToCam(0-dishSize), yToCam(0-dishSize), dishSize*2*camZoom, dishSize*2*camZoom)
     };
 
-    // Spawn Food
-    if(frame%foodSpawnRate == 0 && amountOfFood < foodCap && !paused) {
-        for(let loop in range(0, foodSpawnAmount)) {
-            if(!((amountOfFood+parseInt(loop)+1) < foodCap)) {break;};
-            objects.push(new food(Math.cos(Math.random()*Math.PI*2)*Math.random()*dishSize, Math.sin(Math.random()*Math.PI*2)*Math.random()*dishSize));
-        };
-    };
     // Objects
     objects.sort(function(a, b) {
         return a.x - b.x;
     });
     for(let countObject in objects) {
         objects[countObject].index = parseInt(countObject);
-    };
+    }; 
     oldObjects = structuredClone(objects);
     let leftMost = 0;
     let rightMost = 0;
@@ -520,6 +517,40 @@ function main () {
     });
     for(let countObject in objects) {
         objects[countObject].index = parseInt(countObject);
+    };
+
+    // Objects to Remove
+    while(len(objectIndexesToRemove) > 0) {
+        // Update Other Object's ID
+        if(selected == objects[objectIndexesToRemove[0]].id) {
+            resetSelected();
+            actionType = 'wait';
+        };
+        for(let countObject in objects) {
+            if(objects[countObject].id > objects[objectIndexesToRemove[0]].id) {
+                objects[countObject].id -= 1;
+            };
+        };
+        if(selected > objects[objectIndexesToRemove[0]].id) {
+            selected -= 1;
+        };
+        for(let objectIndexToRemoveCount in objectIndexesToRemove) {
+            if(objectIndexesToRemove[objectIndexToRemoveCount] > objectIndexesToRemove[0]) {
+                objectIndexesToRemove[objectIndexToRemoveCount] -= 1;
+            };
+        };
+        // Remove Object
+        objects.splice(objectIndexesToRemove[0], 1);
+        // "Increment" "Counter"
+        objectIndexesToRemove.shift()
+    };
+
+    // Spawn Food
+    if(frame%foodSpawnRate == 0 && amountOfFood < foodCap && !paused) {
+        for(let loop in range(0, foodSpawnAmount)) {
+            if(!((amountOfFood+parseInt(loop)+1) < foodCap)) {break;};
+            objects.push(new food(Math.cos(Math.random()*Math.PI*2)*Math.random()*dishSize, Math.sin(Math.random()*Math.PI*2)*Math.random()*dishSize));
+        };
     };
 
     // World Border
@@ -718,6 +749,7 @@ function main () {
         objects.push(new cell(Math.cos(Math.random()*Math.PI*2)*Math.random()*dishSize, Math.sin(Math.random()*Math.PI*2)*Math.random()*dishSize));
     };
     */
+    requestAnimationFrame(main);
 };
 
 // User Input
@@ -877,11 +909,11 @@ window.addEventListener('wheel', (event) => {
     updateMouse(event);
 });
 
-onmousemove = function (event) {
+window.addEventListener('mousemove', (event) => {
     updateMouse(event);
-};
+});
 
-onmousedown = function (event) {
+window.addEventListener('mousedown', (event) => {
     mouseState = 1;
     // Iterate over Elements in Reverse Order
     for(let countElement in elements) {
@@ -894,9 +926,9 @@ onmousedown = function (event) {
     };
 
     updateMouse(event);
-};
+});
 
-onmouseup = function (event) {
+window.addEventListener('mouseup', (event) => {
     mouseState = 0;
     resetSelected();
     // Iterate over Elements
@@ -908,15 +940,16 @@ onmouseup = function (event) {
     };
 
     updateMouse(event);
-};
+});
 
 // Pre-Loop
 resizeCanvas();
 HTMLconsoleVisible = !true;
 
+/*
 // Counter Microbot Object
 objects.push(new robot(0, 0, 0, 12, 4, 0.2));
-objects[0].compile(`
+objects[len(objects)-1].compile(`
 pen-color(0 | 0 | 0)
 output(0@)
 write(0@,1,+ | 0)
@@ -929,10 +962,11 @@ write(0 | 0)
 jump(line,-8,+)
 ('Counter Program written in Microlang')
 `, 0);
+*/
 
 // Follower Microbot Object
 objects.push(new robot(-50, -25, 0, 28, 4));
-objects[1].compile(`
+objects[len(objects)-1].compile(`
 bind(0@ | d | distance)
 bind(1@ | a | direction)
 write(-6 | 2)
@@ -956,9 +990,10 @@ jump(line,-19,+)
 ('Follower Program written in Microlang')
 `, 0);
 
+/*
 // Reverser Microbot Object
 objects.push(new robot(-50, 25, 0, 14, 2));
-objects[2].compile(`
+objects[len(objects)-1].compile(`
 output('REV')
 write("" | 0)
 write("" | 1)
@@ -972,9 +1007,7 @@ if-jump(0@,$_,0,= | line)
 jump(line,-8,+)
 ('Reverser Program written in Microlang')
 `, 0);
-
-objects[0].die();
-objects[1].die();
+*/
 
 for(let loop in range(0, 5)) {
     objects.push(new object(Math.cos(Math.random()*Math.PI*2)*Math.random()*dishSize, Math.sin(Math.random()*Math.PI*2)*Math.random()*dishSize));
@@ -1087,7 +1120,7 @@ elements[len(elements)-1].onClick = function () {
 //tutorialPopup();
 
 // Loop
-setInterval(main, 0);
+requestAnimationFrame(main);
 
 /*
 TO-DO LIST

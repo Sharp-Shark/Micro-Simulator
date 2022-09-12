@@ -26,8 +26,9 @@ class food extends object {
         return toReturn;
     };
     process () {
-        this.size -= 0.02 * foodDecayRate;
+        this.size -= 0.02 * foodDecayRate * timeScale;
         if(this.size <= 0) {
+            this.size = 0;
             this.die();
         };
     };

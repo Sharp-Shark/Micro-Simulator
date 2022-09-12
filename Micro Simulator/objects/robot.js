@@ -670,7 +670,7 @@ class robot extends object {
     };
     process () {
         // Timer
-        this.pTimer += this.output=='!!!'?0:this.pSpeed;
+        this.pTimer += this.output=='!!!'?0:(this.pSpeed*timeScale);
         // If Timer Expired, Move Pointer, Execute Instruction and Reset Timer
         while(this.pTimer >= 1) {
             // Execute Current Instruction

@@ -25,24 +25,8 @@ class object {
         return toReturn;
     };
     die () {
-        // Update Other Objects Indexes and IDs
-        if(selected == this.id) {
-            resetSelected();
-            actionType = 'wait';
-        };
-        for(let countObject in objects) {
-            if(objects[countObject].index > this.index) {
-                objects[countObject].index -= 1;
-            };
-            if(objects[countObject].id > this.id) {
-                objects[countObject].id -= 1;
-            };
-        };
-        if(selected > this.id) {
-            selected -= 1;
-        };
         // Destroy Self
-        objects.splice(this.index, 1);
+        objectIndexesToRemove.push(this.id);
     };
     myIntersection () {
         // Returns the Intersection (X) this Object is in
@@ -83,38 +67,33 @@ class object {
         // Has Buffer (oldObject)
         // Has Sweep n' Prune (X Axis)
         let angle = 0;
-        let newAngle = 0;
         let d = 0;
         let totalR = 0;
         let totalA = 0;
         // Collide
         let set = intersections[this.myIntersection()];
         if(this.id == frame%len(objects) || noSweepNPrune) {
-            set = range(0, len(objects));
+            set = range(0, len(objects)-1);
         };
         for(let countObject in set) {
             let current = set[countObject];
-            if(this.id != oldObjects[current].id) {
-                if(this.isColliding(oldObjects[current])) {
-                    let other = oldObjects[current];
-                    // TotalR (radius) = Obj1's Radius + Obj2's Radius
-                    totalR = this.size + other.size;
-                    // TotalA (area) = Obj1's Area + Obj2's Area
-                    totalA = (Math.PI*this.size**2) + (Math.PI*other.size**2);
-                    //angle = pointTowards([this.y, this.x], [oldObjects[current].y, oldObjects[current].x]);
-                    angle = pointTowards([other.y, other.x], [this.y, this.x]);
-                    d = totalR - distance([this.x, this.y], [other.x, other.y]);
-                    let thisVelScaler = Math.sqrt(this.velX**2+this.velY**2);
-                    let otherVelScaler = Math.sqrt(other.velX**2+other.velY**2);
-                    let velScaler = thisVelScaler + otherVelScaler;
-                    this.x += Math.cos(angle) * d * lerp((Math.PI*other.size**2)/totalA);
-                    this.y += Math.sin(angle) * d * lerp((Math.PI*other.size**2)/totalA);
-                    this.velX = lerp(lerp((Math.PI*this.size**2)/totalA), velScaler * Math.cos(angle) * lerp((Math.PI*other.size**2)/totalA), this.velX);
-                    this.velY = lerp(lerp((Math.PI*this.size**2)/totalA), velScaler * Math.sin(angle) * lerp((Math.PI*other.size**2)/totalA), this.velY);
-                    //this.velX = velScaler * Math.cos(angle) * lerp((Math.PI*other.size**2)/totalA);
-                    //this.velY = velScaler * Math.sin(angle) * lerp((Math.PI*other.size**2)/totalA);
-                    this.a = this.a + angleStuff(angleFix(pointTowards([this.oldY, this.oldX], [this.y, this.x])), angleMod(this.a)) * distance([this.oldX, this.oldY], [this.x, this.y])/100;
-                 };
+            if(this.id != oldObjects[current].id && this.isColliding(oldObjects[current])) {
+                let other = oldObjects[current];
+                // TotalR (radius) = Obj1's Radius + Obj2's Radius
+                totalR = this.size + other.size;
+                // TotalA (area) = Obj1's Area + Obj2's Area
+                totalA = (Math.PI*this.size**2) + (Math.PI*other.size**2);
+                angle = pointTowards([other.y, other.x], [this.y, this.x]);
+                d = totalR - distance([this.x, this.y], [other.x, other.y]);
+                let thisVelScaler = Math.sqrt(this.velX**2+this.velY**2);
+                let otherVelScaler = Math.sqrt(other.velX**2+other.velY**2);
+                let velScaler = thisVelScaler + otherVelScaler;
+                this.x += Math.cos(angle) * d * lerp((Math.PI*other.size**2)/totalA);
+                this.y += Math.sin(angle) * d * lerp((Math.PI*other.size**2)/totalA);
+                this.velX = lerp(lerp((Math.PI*this.size**2)/totalA), velScaler * Math.cos(angle) * lerp((Math.PI*other.size**2)/totalA), this.velX);
+                this.velY = lerp(lerp((Math.PI*this.size**2)/totalA), velScaler * Math.sin(angle) * lerp((Math.PI*other.size**2)/totalA), this.velY);
+                // Update Angle
+                this.a = this.a + angleStuff(angleFix(pointTowards([this.oldY, this.oldX], [this.y, this.x])), angleMod(this.a)) * distance([this.oldX, this.oldY], [this.x, this.y])/100;
             };
         };
     };
@@ -157,10 +136,10 @@ class object {
         this.y += this.velY * timeScale;
         this.a += this.velA * timeScale;
         // Apply Friction
-        let friction = 1 + (0.15 + (this.size)/500) * timeScale;
-        this.velX = this.velX / friction;
-        this.velY = this.velY / friction;
-        this.velA = this.velA / friction;
+        let friction = 1 + (0.15 + (this.size)/500);
+        this.velX = this.velX / friction ** timeScale;
+        this.velY = this.velY / friction ** timeScale;
+        this.velA = this.velA / friction ** timeScale;
         // Old X and Y
         this.oldX = this.x;
         this.oldY = this.y;
