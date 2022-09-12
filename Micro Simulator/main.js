@@ -26,7 +26,7 @@ function tutorialPopup () {
     Q and E to Zoom -- Q e E para Zoom
     R to Reprogram -- R para Reprogramar
     T to Execute Command -- T para Executar Comando
-    F to Clear Paint -- F para Limpar a Tinta
+    Y to Clear Paint -- Y para Limpar a Tinta
     Z to Remove All -- Z para Remover Tudo
     X to Delete Selected -- X para Deletar Selecionado
     C to Copy Selected -- C para Copiar Selecionado
@@ -39,7 +39,7 @@ function tutorialPopup () {
     3+C to Spawn a Custom Robot -- 3+C para Spawnar Robô Customizado
     4 to Spawn Object -- 4 para Spawnar Objeto
     H for Help Menu -- H para Menu de Ajuda
-    G for Microlang Doc -- G para Documentação do Microlang
+    J for Microlang Doc -- J para Documentação do Microlang
     P to Toggle Optimization -- P para dar Toggle nas Otimizações
     0 for Fullscreen -- 0 para Tela Cheia
     `);
