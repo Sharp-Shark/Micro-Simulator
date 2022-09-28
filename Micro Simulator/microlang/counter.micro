@@ -1,4 +1,5 @@
 pen-color( 0 | 0 | 0 )
+( 'LOOP' )
 output( @0 )
 write( @0 , 1 , + | 0 )
 move(size , 2 , /* )

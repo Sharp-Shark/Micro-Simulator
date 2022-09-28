@@ -135,6 +135,8 @@ let screenX = screen.getBoundingClientRect().left;
 let screenY = screen.getBoundingClientRect().top;
 let ctx = screen.getContext("2d");
 // FPS & Time Variables
+let continueMainLoop = true;
+let windowWasOutOfFocus = true;
 let timeScale = 1;
 let timeScaleMult = 1;
 let FPS_average = 0;
@@ -307,7 +309,12 @@ function findElement (label) {
 // Main Loop Function
 function main (time) {
     // FPS and Delta Time
-    timeScale = 60/(1/(time - lastTime)*1000);
+    if(windowWasOutOfFocus) {
+        timeScale /= timeScaleMult;
+        windowWasOutOfFocus = false;
+    } else {
+        timeScale = 60/(1/(time - lastTime)*1000);
+    };
     FPS_sample.push(time - lastTime);
     lastTime = time;
     if(len(FPS_sample)>29) {
@@ -749,7 +756,8 @@ function main (time) {
         objects.push(new cell(Math.cos(Math.random()*Math.PI*2)*Math.random()*dishSize, Math.sin(Math.random()*Math.PI*2)*Math.random()*dishSize));
     };
     */
-    requestAnimationFrame(main);
+
+    if(continueMainLoop) {requestAnimationFrame(main);};
 };
 
 // User Input
@@ -815,6 +823,7 @@ window.addEventListener('keydown', (event) => {
         } else {
             alert('Cancelled!');
         };
+        windowWasOutOfFocus = true;
     };
     if(event.key == 't' && selected != -1 && objects[selected].objType == 'robot' && !isKeyDown('t')) {
         // Add Line Numbers to memTxt
@@ -834,6 +843,7 @@ window.addEventListener('keydown', (event) => {
         } else {
             window.alert('Cancelled!');
         };
+        windowWasOutOfFocus = true;
     };
     if (event.key == 'y' && !isKeyDown('y')) {
         paint = [];
@@ -859,6 +869,7 @@ window.addEventListener('keydown', (event) => {
             } else {
                 window.alert('Cancelled!');
             };
+            windowWasOutOfFocus = true;
         } else {
             objects.push(new robot(mTransX, mTransY));
         };
@@ -942,30 +953,22 @@ window.addEventListener('mouseup', (event) => {
     updateMouse(event);
 });
 
+window.addEventListener("visibilitychange", (event) => {
+    if(document.hidden) {
+        continueMainLoop = false;
+    } else {
+        continueMainLoop = true;
+        windowWasOutOfFocus = true;
+        requestAnimationFrame(main);
+    };
+});
+
 // Pre-Loop
 resizeCanvas();
 HTMLconsoleVisible = !true;
 
-/*
-// Counter Microbot Object
-objects.push(new robot(0, 0, 0, 12, 4, 0.2));
-objects[len(objects)-1].compile(`
-pen-color( 0 | 0 | 0 )
-output( @0 )
-write( @0 , 1 , + | 0 )
-move(size , 2 , /* )
-strafe( velX , - | velY , - )
-pen-add()
-point( a , º90 , + )
-if-jump( @0 , 1000 , != | line , 2 , + )
-write( 0 | 0 )
-jump( line , -8 , + )
-( 'Counter Program written in Microlang' )
-`, 0);
-*/
-
 // Follower Microbot Object
-objects.push(new robot(-50, -25, 0, 28, 4));
+objects.push(new robot(-50, -25, 0, 21));
 objects[len(objects)-1].compile(`
 bind( @0 | d | distance )
 bind( @1 | a | direction )
@@ -990,24 +993,22 @@ jump(line , -19 , + )
 ( 'Follower Program written in Microlang' )
 `, 0);
 
-/*
 // Reverser Microbot Object
-objects.push(new robot(-50, 25, 0, 14, 2));
+objects.push(new robot(-50, 25, 0, 12, 2, 1));
 objects[len(objects)-1].compile(`
-output( 'REV' )
 write( "" | 0 )
-write( "" | 1 )
-( 'LOOP' )
-if-jump( @0 , $_ , 0 , = | line , 4 , +)
-write( @1 , @0 , @0 , $_ , -1 , + , $@ , + | 1)
-write( @0 , $[] , 0 , : , $E | 0)
+write( "REV" | 1 )
+("LOOP")
+if-jump( @0 , $_ , 0 , = | line , 4 , + )
+write( @1 , @0 , @0 , $_ , -1 , + , $@ , + | 1 )
+write( @0 , $[] , 0 , : , $E | 0 )
 jump( line , -4 , + )
-print( @1 )
-if-jump( @0 , $_ , 0 , = | line)
-jump( line , -8 , +)
+output( @1 )
+if-jump( @0 , $_ , 0 , = | line )
+write( "" | 1 )
+jump( line , -8 , + )
 ( 'Reverser Program written in Microlang' )
 `, 0);
-*/
 
 for(let loop in range(0, 5)) {
     objects.push(new object(Math.cos(Math.random()*Math.PI*2)*Math.random()*dishSize, Math.sin(Math.random()*Math.PI*2)*Math.random()*dishSize));
@@ -1080,7 +1081,7 @@ elements[len(elements)-1].data.stageTxt = [[
 ``,
 `EX1: instruction(arg1 | arg2 | ...) -> syntax example`,
 `EX2: print("abcd",$_,2,/*)jump(line,-1,+) -> prints 2 forever`,
-`EX3: write(1 | 0 | 1)output(0@,1@,+) -> writes 1 to cells 0 and 1 & displays 2`,
+`EX3: write(1 | 0 | 1)output(@0,@1,+) -> writes 1 to cells 0 and 1 & displays 2`,
 `EX4: movePos(size)point(a,90º,+)pen-add() -> draws a square it's size`,
 `EX5: jump(line) -> does nothing`,
 ],[
