@@ -703,6 +703,10 @@ class robot extends object {
         ctx.fillStyle = this.output=='!!!'?'rgb(200, 00, 0, 1)':'black';
         ctx.font = this.size*camZoom*0.6+'px "Lucida Console", "Courier New", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(String(this.output).slice(0, 4), xToCam(this.x), yToCam(this.y+this.size*0.2));
+        let outputTxt = String(this.output);
+        let lastCharExtraFrames = 1;
+        let sliceStart = Math.min(Math.floor(frame/15)%Math.max(len(outputTxt)-(3-lastCharExtraFrames), 1), len(outputTxt)-4);
+        outputTxt = outputTxt.slice(Math.max(sliceStart, 0), sliceStart+4);
+        ctx.fillText(outputTxt, xToCam(this.x), yToCam(this.y+this.size*0.2));
     };
 };
