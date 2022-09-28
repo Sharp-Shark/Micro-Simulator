@@ -23,7 +23,7 @@ class robot extends object {
         // Output
         this.output = '';
         // Code Instruction
-        this.codeTxt = new Array(cLen).fill('()');
+        this.codeTxt = new Array(cLen).fill('(  )');
         this.code = new Array(cLen).fill(['']);
         // Code Memory
         this.binds = {};
