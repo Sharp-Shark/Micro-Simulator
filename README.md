@@ -1,1 +1,1 @@
-[Click Image to See the Simulator![sim_image](microSimTeaser.png?raw=true)](https://micro-simulator.pythoncoffee.repl.co/)
+[Click Image to See the Simulator![sim_image](microSimTeaser.png?raw=true)]([https://micro-simulator.pythoncoffee.repl.co/](https://sharp-shark.github.io/Micro-Simulator/Micro%20Simulator/index.html))
